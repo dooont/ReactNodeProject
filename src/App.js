@@ -13,28 +13,48 @@ import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
+import Pagination from '@mui/material/Pagination';
 import axios from 'axios';
+//learning points, rest api, reactjs, fullstack, nodejs, mui, pair programming, etc. 
 
-
+async function getPokemon(pageNumber) {
+  const result = await axios.get(`https://pokeapi.co/api/v2/pokemon?limit=10&offset=${pageNumber*10}`); //calls the pokemon api (which is a rest api), axios is a library that lets you make calls to other apis
+  return result;
+}
 
 function App() {
   const [pokemonData, setPokemonData] = useState([]); //In "cuz ur stupid terms" use state makes pokemonData an array, and setPokemonData sets the values based on the api
-    
-  const pokemon = [
-      {
-        name: 'Bulbasaur',
-        id: 1,
-        type: "Grass"
-      },
-      {
-        name: 'Ivysaur',
-        id: 2,
-        type: ["Grass", "Poison"]
-    },
-      {name: 'Venusaur',
-      id: 3,
-      type: ["Grass", "Poison"]}
-  ];
+  
+  const [page, setPage] = React.useState(0);
+  const handleChange = (event, value) => {
+    setPage(value);
+  };
+
+  useEffect(() => {
+    (async () => { //when using async in use effect, you gotta to the empty parentheses 
+      const pokemonAPIResults = await getPokemon(page);
+      const pokemon = pokemonAPIResults.data.results;
+      // console.log(pokemonAPIResults);
+      // console.log(pokemon);
+      setPokemonData(pokemon); 
+    })()
+  }, [page]); 
+  
+  // const pokemon = [
+  //     {
+  //       name: 'Bulbasaur',
+  //       id: 1,
+  //       type: "Grass"
+  //     },
+  //     {
+  //       name: 'Ivysaur',
+  //       id: 2,
+  //       type: ["Grass", "Poison"]
+  //   },
+  //     {name: 'Venusaur',
+  //     id: 3,
+  //     type: ["Grass", "Poison"]}
+  // ];
 
   return (
     <React.Fragment>
@@ -50,9 +70,9 @@ function App() {
       <Container>
       <List>
         {
-          pokemon.map(x => {
+          pokemonData.map(x => {
             return ( //always have keys :D
-            <ListItem disablePadding key={x.id}>
+            <ListItem disablePadding key={x.name}>
               <ListItemButton>
                 <ListItemText primary= {x.name} />
               </ListItemButton>
@@ -63,6 +83,7 @@ function App() {
         </List>
         </Container>
       </Container>
+      <Pagination count={129} page={page} onChange={handleChange} />
     </React.Fragment>
   );
 }
