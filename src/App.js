@@ -1,34 +1,29 @@
 import logo from './logo.svg';
 import './App.css';
-import React, {useState, useEffect} from 'react';
-import Container from '@mui/material/Container';
-import AppBar from '@mui/material/AppBar';
-import Box from '@mui/material/Box';
-import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import Avatar from '@mui/material/Avatar';
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemText from '@mui/material/ListItemText';
-import Pagination from '@mui/material/Pagination';
+import React, {useState, useEffect, Fragment} from 'react';
+import {Container, AppBar, Box, Toolbar, Typography, Button, Avatar, List, ListItem, ListItemButton, ListItemIcon, ListItemText, 
+Collapse, Pagination, Grid} from '@mui/material';
 import axios from 'axios';
 //learning points, rest api, reactjs, fullstack, nodejs, mui, pair programming, etc. 
+// git add .; git commit -m "message"; git push
 
 async function getPokemon(pageNumber) {
-  const result = await axios.get(`https://pokeapi.co/api/v2/pokemon?limit=10&offset=${pageNumber*10}`); //calls the pokemon api (which is a rest api), axios is a library that lets you make calls to other apis
+  const result = await axios.get(`https://pokeapi.co/api/v2/pokemon?limit=10&offset=${(pageNumber-1)*10}`); //calls the pokemon api (which is a rest api), axios is a library that lets you make calls to other apis
   return result;
 }
 
 function App() {
   const [pokemonData, setPokemonData] = useState([]); //In "cuz ur stupid terms" use state makes pokemonData an array, and setPokemonData sets the values based on the api
   
+  const [openId, setOpenId] = React.useState(-1);
   const [page, setPage] = React.useState(0);
   const handleChange = (event, value) => {
     setPage(value);
   };
+
+  const handleListItemClick = (event, id) => {
+    setOpenId(id);
+  }
 
   useEffect(() => {
     (async () => { //when using async in use effect, you gotta to the empty parentheses 
@@ -39,26 +34,9 @@ function App() {
       setPokemonData(pokemon); 
     })()
   }, [page]); 
-  
-  // const pokemon = [
-  //     {
-  //       name: 'Bulbasaur',
-  //       id: 1,
-  //       type: "Grass"
-  //     },
-  //     {
-  //       name: 'Ivysaur',
-  //       id: 2,
-  //       type: ["Grass", "Poison"]
-  //   },
-  //     {name: 'Venusaur',
-  //     id: 3,
-  //     type: ["Grass", "Poison"]}
-  // ];
 
   return (
-    <React.Fragment>
-      <Container maxWidth = {false}>
+    <Container maxWidth = {false}>
       <AppBar position="static">
         <Toolbar>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
@@ -67,24 +45,37 @@ function App() {
           <Avatar alt="Pokeball" src="/pokeballtransparent.png"/>
         </Toolbar>
       </AppBar>
-      <Container>
+      <Grid container direction="column" justifyContent="center" alignItems="center" spacing = {4}>
+      <Grid item xs={12}>
       <List>
         {
           pokemonData.map(x => {
+            const url_id = x.url.split('/')[6];
             return ( //always have keys :D
+            //<> and </> are fragments, say hi :D
+            <> 
             <ListItem disablePadding key={x.name}>
-              <ListItemButton>
+              <ListItemButton selected={openId === url_id}
+          onClick={(event) => handleListItemClick(event, url_id)}> 
                 <ListItemText primary= {x.name} />
               </ListItemButton>
             </ListItem>
+            <Collapse in={openId===url_id} timeout="auto" unmountOnExit>
+              <Container>
+                hi :D
+              </Container>
+            </Collapse>
+            </>
             );
           }) 
         }
         </List>
-        </Container>
-      </Container>
-      <Pagination count={129} page={page} onChange={handleChange} />
-    </React.Fragment>
+        </Grid>
+        <Grid item xs={12}>
+        <Pagination count={129} page={page} onChange={handleChange} />
+        </Grid>
+      </Grid>
+    </Container>
   );
 }
  //Where the Actual Coding Happens
