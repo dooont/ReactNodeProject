@@ -20,17 +20,26 @@ function App() {
   const handleChange = (event, value) => {
     setPage(value);
   };
+  const [pokemonInfo, setPokemonInfo] = useState({}); //In "cuz ur stupid terms" use state makes pokemonData an array, and setPokemonData sets the values based on the api
 
-  const handleListItemClick = (event, id) => {
+  const handleListItemClick = (event, id, name) => {
     setOpenId(id);
+    
+  }
+
+  const retrievePokemon = async (name) => {
+    const result = await axios.get(`https://pokeapi.co/api/v2/pokemon/${name}`);
+    setPokemonInfo(result.data);
+    //when you make an http request (like a get function), responses is always going to be a lot of stuff, but we want the data specifically
+    //everytime you do get, make sure you call .data
+    //https://axios-http.com/docs/res_schema
+    return result;
   }
 
   useEffect(() => {
     (async () => { //when using async in use effect, you gotta to the empty parentheses 
       const pokemonAPIResults = await getPokemon(page);
       const pokemon = pokemonAPIResults.data.results;
-      // console.log(pokemonAPIResults);
-      // console.log(pokemon);
       setPokemonData(pokemon); 
     })()
   }, [page]); 
@@ -49,23 +58,35 @@ function App() {
       <Grid item xs={12}>
       <List>
         {
-          pokemonData.map(x => {
-            const url_id = x.url.split('/')[6];
+          pokemonData.map(pokemonIterator => {
+            const url_id = pokemonIterator.url.split('/')[6];
             return ( //always have keys :D
             //<> and </> are fragments, say hi :D
-            <> 
-            <ListItem disablePadding key={x.name}>
+            <Fragment key={pokemonIterator.name}> 
+            <ListItem disablePadding key={pokemonIterator.name}>
               <ListItemButton selected={openId === url_id}
-          onClick={(event) => handleListItemClick(event, url_id)}> 
-                <ListItemText primary= {x.name} />
+          onClick={async (event) => {
+            //async how does it work?
+            handleListItemClick(event, url_id, pokemonIterator.name);
+            //await, how does it work?
+            //"magic" - corinna yong, the best teacher ever (ty github copilot)
+            await retrievePokemon(pokemonIterator.name);
+          }}> 
+
+                <ListItemText primary= {pokemonIterator.name} />
               </ListItemButton>
             </ListItem>
             <Collapse in={openId===url_id} timeout="auto" unmountOnExit>
               <Container>
-                hi :D
-              </Container>
+                <img src={pokemonInfo.sprites?.front_default} />
+                {pokemonInfo.types?.map(type => {
+                  //what does the question mark do? 
+                  //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining
+                  return <Typography>{type.type.name}</Typography>
+                })}
+              </Container>  
             </Collapse>
-            </>
+            </Fragment>
             );
           }) 
         }
@@ -80,5 +101,5 @@ function App() {
 }
  //Where the Actual Coding Happens
 
- 
+  
 export default App;
