@@ -26,6 +26,8 @@ function App() {
     setPage(value);
   };
   const [pokemonInfo, setPokemonInfo] = useState({}); //In "cuz ur stupid terms" use state makes pokemonData an array, and setPokemonData sets the values based on the api
+  const [pokemonDescription, setPokemonDescription] = useState('');
+
 
   const handleListItemClick = (event, id, name) => {
     setOpenId(id);
@@ -41,13 +43,24 @@ function App() {
     return result;
   }
 
+  const retrievePokemonDescription = async (name) => {
+    const result = await axios.get(`https://pokeapi.co/api/v2/pokemon-species/${name}`);
+    const flavor_text_entries = result.data?.flavor_text_entries;
+    const english_flavor_text = flavor_text_entries?.find((entry => entry.language.name == 'en'))?.flavor_text ?? 'na';
+    const line = english_flavor_text
+    const newline = line.replace(/(\r\n|\n|\r|\f)/gm, " ");
+    console.log(newline);
+    setPokemonDescription(newline);
+    return newline;
+  }
+
   useEffect(() => {
     (async () => { //when using async in use effect, you gotta to the empty parentheses
       setProgressWebsite(true);
       const pokemonAPIResults = await getPokemon(page);
-
       const pokemon = pokemonAPIResults.data.results;
       setPokemonData(pokemon);
+      setProgressWebsite(false);
     })()
   }, [page]);
 
@@ -89,11 +102,9 @@ function App() {
           <Avatar alt="Pokeball" src="/pokeballtransparent.png" />
         </Toolbar>
       </AppBar>
-      {/* {progressWebsite ?
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
-          <LinearProgress />
-        </Box>
-        : */}
+
+      {progressWebsite ?
+        <LinearProgress /> :
         <Grid container direction="column" justifyContent="center" alignItems="center" spacing={4}>
           <Grid item xs={12}>
             <List>
@@ -112,6 +123,7 @@ function App() {
                             //await, how does it work?
                             //"magic" - corinna yong, the best teacher ever (ty github copilot)
                             await retrievePokemon(pokemonIterator.name);
+                            await retrievePokemonDescription(pokemonIterator.name);
                             //this one needs to be lowercase cuz it's calling from the API
                           }}>
 
@@ -122,6 +134,11 @@ function App() {
                         <Container maxWidth='false'>
                           <Stack direction='row' alignItems='center' justifyContent='space-between'>
                             <img src={pokemonInfo.sprites?.front_default} />
+                            <Box>
+                              {
+                                pokemonDescription
+                              }
+                            </Box>
                             <Box>
                               {pokemonInfo.types?.map(type => {
                                 //what does the question mark do? 
@@ -145,7 +162,9 @@ function App() {
             <Pagination count={129} page={page} onChange={handleChange} />
           </Grid>
         </Grid>
-      
+      }
+
+
 
     </Container>
   );
