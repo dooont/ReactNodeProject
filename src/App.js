@@ -24,7 +24,7 @@ function App() {
     setPage(value);
   };
   const [pokemonInfo, setPokemonInfo] = useState({}); //In "cuz ur stupid terms" use state makes pokemonData an array, and setPokemonData sets the values based on the api
-  const [pokemonDescription, setPokemonDescription] = useState('');
+  const [pokemonDescription, setPokemonDescription] = useState({});
 
   async function getPokemon(pageNumber) {
     const result = await axios.get(`https://pokeapi.co/api/v2/pokemon?limit=10&offset=${(pageNumber - 1) * 10}`); //calls the pokemon api (which is a rest api), axios is a library that lets you make calls to other apis
@@ -46,7 +46,7 @@ function App() {
     //when we update state, you can't just set openId after, we have to give it a brand new object
     //if static, . if dynamic, []
     const updatedOpenId = _.cloneDeep(openId);
-    updatedOpenId[name] = !openId[name];
+    updatedOpenId[name.toLowerCase()] = !openId[name.toLowerCase()];
     setOpenId(updatedOpenId);
     console.log(updatedOpenId);
     //only one opens rn because it's looking for a static number
@@ -55,7 +55,15 @@ function App() {
 
   const retrievePokemon = async (name) => {
     const result = await axios.get(`https://pokeapi.co/api/v2/pokemon/${name}`);
-    setPokemonInfo(result.data);
+
+    const updatedPokemonInfo = {
+
+      ...pokemonInfo, 
+      [name.toLowerCase()]: result.data
+      //[] is how we dynamically set it to the name we want
+    };
+
+    setPokemonInfo(updatedPokemonInfo);
     //when you make an http request (like a get function), responses is always going to be a lot of stuff, but we want the data specifically
     //everytime you do get, make sure you call .data
     //https://axios-http.com/docs/res_schema
@@ -69,7 +77,12 @@ function App() {
     const line = english_flavor_text
     const newline = line.replace(/(\r\n|\n|\r|\f)/gm, " ");
     // console.log(newline);
-    setPokemonDescription(newline);
+
+    const updatedPokemonDesc = {
+      ...pokemonDescription,
+      [name.toLowerCase()]: newline
+    };
+    setPokemonDescription(updatedPokemonDesc);
     return newline;
   }
 
@@ -108,7 +121,9 @@ function App() {
     //?? = nullish coalescing operator
   }
 
-  // console.log(progressWebsite);
+  console.log(pokemonInfo);
+  console.log(pokemonDescription);
+  console.log(openId);
 
   return (
     <Container maxWidth={false}>
@@ -131,14 +146,17 @@ function App() {
                   // const url_id = pokemonIterator.url.split('/')[6];
                   //[] in this situation means it's the 7th item in the array
                   const pokemonName = pokemonIterator.name.charAt(0).toUpperCase() + pokemonIterator.name.slice(1);
+
+                  console.log(pokemonName);
+
                   return ( //always have keys :D
                     //<> and </> are fragments, say hi :D
                     <Fragment key={pokemonName}>
                       <ListItem disablePadding key={pokemonName} sx={{ minWidth: '1000px' }}>
-                        <ListItemButton selected={openId[pokemonName] === true}
+                        <ListItemButton selected={openId[pokemonIterator.name]}
                           onClick={async (event) => {
                             //async how does it work?
-                            handleListItemClick(event, pokemonName);
+                            handleListItemClick(event, pokemonIterator.name);
                             //await, how does it work?
                             //"magic" - corinna yong, the best teacher ever 
                             await retrievePokemon(pokemonIterator.name);
@@ -149,17 +167,17 @@ function App() {
                           <ListItemText primary={pokemonName} />
                         </ListItemButton>
                       </ListItem>
-                      <Collapse in={openId[pokemonName] === true} timeout="auto" unmountOnExit>
+                      <Collapse in={openId[pokemonIterator.name]} timeout="auto" unmountOnExit>
                         <Container maxWidth='false'>
                           <Stack direction='row' alignItems='center' justifyContent='space-between'>
-                            <img src={pokemonInfo.sprites?.front_default} />
+                            <img src={pokemonInfo[pokemonIterator.name]?.sprites?.front_default} />
                             <Box>
                               {
-                                pokemonDescription
+                                pokemonDescription[pokemonIterator.name]
                               }
                             </Box>
                             <Box>
-                              {pokemonInfo.types?.map(type => {
+                              {pokemonInfo[pokemonIterator.name]?.types?.map(type => {
                                 //what does the question mark do? 
                                 //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining
                                 // return <Typography>{type.type.name}</Typography>
