@@ -6,13 +6,9 @@ import {
   Collapse, Pagination, Grid, Chip, Stack, LinearProgress
 } from '@mui/material';
 import axios from 'axios';
+import _ from 'lodash';
 //learning points, rest api, reactjs, fullstack, nodejs, mui, pair programming, etc. 
 // git add .; git commit -m "message"; git push
-
-async function getPokemon(pageNumber) {
-  const result = await axios.get(`https://pokeapi.co/api/v2/pokemon?limit=10&offset=${(pageNumber - 1) * 10}`); //calls the pokemon api (which is a rest api), axios is a library that lets you make calls to other apis
-  return result;
-}
 
 function App() {
   const [pokemonData, setPokemonData] = useState([]); //In "cuz ur stupid terms" use state makes pokemonData an array, and setPokemonData sets the values based on the api
@@ -20,7 +16,9 @@ function App() {
   const [progressWebsite, setProgressWebsite] = React.useState(false);
   const [progressPokemon, setProgressPokemon] = React.useState(false);
 
-  const [openId, setOpenId] = React.useState(-1);
+  const [openId, setOpenId] = React.useState({});
+
+
   const [page, setPage] = React.useState(0);
   const handleChange = (event, value) => {
     setPage(value);
@@ -28,10 +26,31 @@ function App() {
   const [pokemonInfo, setPokemonInfo] = useState({}); //In "cuz ur stupid terms" use state makes pokemonData an array, and setPokemonData sets the values based on the api
   const [pokemonDescription, setPokemonDescription] = useState('');
 
+  async function getPokemon(pageNumber) {
+    const result = await axios.get(`https://pokeapi.co/api/v2/pokemon?limit=10&offset=${(pageNumber - 1) * 10}`); //calls the pokemon api (which is a rest api), axios is a library that lets you make calls to other apis
+    
+    const pokemonObject = result.data.results.reduce((acc, currentValue, index) => {
+      acc[currentValue.name] = false;
+      return acc;
+    } , {} ) //if array was empty, it'd return back an empty object
+    //so apparently you can update content of an array of an object with const?? that's crazy
 
-  const handleListItemClick = (event, id, name) => {
-    setOpenId(id);
+    console.log(pokemonObject);
 
+    setOpenId(pokemonObject);
+    return result.data.results;
+  }
+
+  const handleListItemClick = (event, name) => {
+    // openId[name] = true;
+    //when we update state, you can't just set openId after, we have to give it a brand new object
+    //if static, . if dynamic, []
+    const updatedOpenId = _.cloneDeep(openId);
+    updatedOpenId[name] = !openId[name];
+    setOpenId(updatedOpenId);
+    console.log(updatedOpenId);
+    //only one opens rn because it's looking for a static number
+    //we need react state management
   }
 
   const retrievePokemon = async (name) => {
@@ -49,7 +68,7 @@ function App() {
     const english_flavor_text = flavor_text_entries?.find((entry => entry.language.name == 'en'))?.flavor_text ?? 'na';
     const line = english_flavor_text
     const newline = line.replace(/(\r\n|\n|\r|\f)/gm, " ");
-    console.log(newline);
+    // console.log(newline);
     setPokemonDescription(newline);
     return newline;
   }
@@ -58,8 +77,7 @@ function App() {
     (async () => { //when using async in use effect, you gotta to the empty parentheses
       setProgressWebsite(true);
       const pokemonAPIResults = await getPokemon(page);
-      const pokemon = pokemonAPIResults.data.results;
-      setPokemonData(pokemon);
+      setPokemonData(pokemonAPIResults);
       setProgressWebsite(false);
     })()
   }, [page]);
@@ -90,7 +108,7 @@ function App() {
     //?? = nullish coalescing operator
   }
 
-  console.log(progressWebsite);
+  // console.log(progressWebsite);
 
   return (
     <Container maxWidth={false}>
@@ -110,18 +128,19 @@ function App() {
             <List>
               {
                 pokemonData.map(pokemonIterator => {
-                  const url_id = pokemonIterator.url.split('/')[6];
+                  // const url_id = pokemonIterator.url.split('/')[6];
+                  //[] in this situation means it's the 7th item in the array
                   const pokemonName = pokemonIterator.name.charAt(0).toUpperCase() + pokemonIterator.name.slice(1);
                   return ( //always have keys :D
                     //<> and </> are fragments, say hi :D
                     <Fragment key={pokemonName}>
                       <ListItem disablePadding key={pokemonName} sx={{ minWidth: '1000px' }}>
-                        <ListItemButton selected={openId === url_id}
+                        <ListItemButton selected={openId[pokemonName] === true}
                           onClick={async (event) => {
                             //async how does it work?
-                            handleListItemClick(event, url_id, pokemonName);
+                            handleListItemClick(event, pokemonName);
                             //await, how does it work?
-                            //"magic" - corinna yong, the best teacher ever (ty github copilot)
+                            //"magic" - corinna yong, the best teacher ever 
                             await retrievePokemon(pokemonIterator.name);
                             await retrievePokemonDescription(pokemonIterator.name);
                             //this one needs to be lowercase cuz it's calling from the API
@@ -130,7 +149,7 @@ function App() {
                           <ListItemText primary={pokemonName} />
                         </ListItemButton>
                       </ListItem>
-                      <Collapse in={openId === url_id} timeout="auto" unmountOnExit>
+                      <Collapse in={openId[pokemonName] === true} timeout="auto" unmountOnExit>
                         <Container maxWidth='false'>
                           <Stack direction='row' alignItems='center' justifyContent='space-between'>
                             <img src={pokemonInfo.sprites?.front_default} />
