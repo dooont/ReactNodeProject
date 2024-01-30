@@ -1,8 +1,9 @@
 import './App.css';
+import pokeball from './pokeballtransparent.png';
 import React, { useState, useEffect, Fragment } from 'react';
 import {
   Container, AppBar, Box, Toolbar, Typography, Button, Avatar, List, ListItem, ListItemButton, ListItemIcon, ListItemText,
-  Collapse, Pagination, Grid, Chip, Stack, LinearProgress
+  Collapse, Pagination, Grid, Chip, Stack, LinearProgress, Divider
 } from '@mui/material';
 import axios from 'axios';
 import _ from 'lodash';
@@ -15,7 +16,7 @@ function App() {
   const [openId, setOpenId] = React.useState({});
 
 
-  const [page, setPage] = React.useState(0);
+  const [page, setPage] = React.useState(1);
   const handleChange = (event, value) => {
     setPage(value);
   };
@@ -29,6 +30,9 @@ function App() {
       return acc;
     }, {})
 
+    function getNumber(page) {
+
+    }
 
 
     setOpenId(pokemonObject);
@@ -99,36 +103,42 @@ function App() {
   }
 
   return (
-    <Container maxWidth={false}>
-      <AppBar position="static">
-        <Toolbar>
+    <Container maxWidth={false} sx={{ width: '80%' }}>
+      <AppBar position="static" sx={{ backgroundColor: '#700101' }}>
+        <Toolbar sx={{}}>
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            Pokedex
+            Pokédex
           </Typography>
-          <Avatar alt="Pokeball" src="/pokeballtransparent.png" />
+          <Avatar alt="Pokeball" src={pokeball} />
         </Toolbar>
       </AppBar>
 
       {progressWebsite ?
         <LinearProgress /> :
         <Grid container direction="column" justifyContent="center" alignItems="center" spacing={4}>
-          <Grid item xs={12}>
+          <Grid item xs={12} sx={{ width: '100%' }}>
             <List>
               {
-                pokemonData.map(pokemonIterator => {
+                pokemonData.map((pokemonIterator, pokemonIndex) => {
+                  const pokemonID = (page - 1) * 10 + pokemonIndex + 1; 
                   const pokemonName = pokemonIterator.name.charAt(0).toUpperCase() + pokemonIterator.name.slice(1);
                   return (
                     <Fragment key={pokemonName}>
-                      <ListItem disablePadding key={pokemonName} sx={{ minWidth: '1000px' }}>
-                        <ListItemButton selected={openId[pokemonIterator.name]}
-                          onClick={async (event) => {
-                            handleListItemClick(event, pokemonIterator.name);
-                            await retrievePokemon(pokemonIterator.name);
-                            await retrievePokemonDescription(pokemonIterator.name);
-                          }}>
-                          <ListItemText primary={pokemonName} />
-                        </ListItemButton>
-                      </ListItem>
+                      {/* <Stack justifyContent="space-between" direction="row" alignItems="center"> */}
+                        <ListItem disablePadding key={pokemonName} sx={{ minWidth: '300px', width: '100%' }} secondaryAction={
+                          <ListItemText secondary={"#"+pokemonID} sx={{ fontSize: "12px"}} />
+                        }>
+                          <ListItemButton selected={openId[pokemonIterator.name]}
+                            onClick={async (event) => {
+                              handleListItemClick(event, pokemonIterator.name);
+                              await retrievePokemon(pokemonIterator.name);
+                              await retrievePokemonDescription(pokemonIterator.name);
+                            }}>
+                            <ListItemText primary={pokemonName} />
+                          </ListItemButton>
+                        </ListItem>
+                      {/* </Stack> */}
+                      <Divider component="li" />
                       <Collapse in={openId[pokemonIterator.name]} timeout="auto" unmountOnExit>
                         <Container maxWidth='false'>
                           <Stack direction='row' alignItems='center' justifyContent='space-between'>
@@ -155,7 +165,7 @@ function App() {
             </List>
           </Grid>
           <Grid item xs={12}>
-            <Pagination count={129} page={page} onChange={handleChange} />
+            <Pagination count={25} page={page} onChange={handleChange} />
           </Grid>
         </Grid>
       }
